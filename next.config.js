@@ -6,6 +6,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  basePath: `/${repo}`,
+  assetPrefix: `/${repo}/`,
 };
 
 module.exports = nextConfig
