@@ -1,0 +1,35 @@
+{
+  "name": "spotless-sams",
+  "version": "1.0.0",
+  "description": "A modern, mobile-first car detailing website for Spotless Sams.",
+  "main": "app/page.tsx",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "export": "next build",
+    "start": "next start"
+  },
+  "keywords": [
+    "nextjs",
+    "tailwindcss",
+    "typescript",
+    "car detailing",
+    "website"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.2.2",
+    "@types/node": "^25.5.2",
+    "@types/react": "^19.2.14",
+    "autoprefixer": "^10.4.27",
+    "postcss": "^8.5.9",
+    "tailwindcss": "^4.2.2",
+    "typescript": "^6.0.2"
+  }
+}

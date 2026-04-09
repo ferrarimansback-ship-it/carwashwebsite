@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0px 1000px var(--surface-strong) inset;
+  -webkit-text-fill-color: var(--text);
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+:root {
+  --bg: #f6f8ff;
+  --surface: rgba(255, 255, 255, 0.82);
+  --surface-strong: #ffffff;
+  --text: #111827;
+  --text-muted: #475569;
+  --border: rgba(15, 23, 42, 0.10);
+  --hero-from: #dbeafe;
+  --hero-via: #e9d5ff;
+  --hero-to: #fbcfe8;
+  --accent-from: #60a5fa;
+  --accent-to: #d946ef;
+  --accent-solid: #7c3aed;
+}
+
+.theme-surface {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(14px);
+}
+
+.theme-card {
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+}
+
+.theme-text-muted {
+  color: var(--text-muted);
+}
+
+.theme-accent {
+  background: linear-gradient(135deg, var(--accent-from), var(--accent-to));
+  color: white;
+}
+
+.theme-hero {
+  background: linear-gradient(135deg, var(--hero-from), var(--hero-via), var(--hero-to));
+}
+
+html.dark {
+  --bg: #050816;
+  --surface: rgba(15, 23, 42, 0.78);
+  --surface-strong: #0f172a;
+  --text: #f8fafc;
+  --text-muted: #cbd5e1;
+  --border: rgba(255, 255, 255, 0.10);
+  --hero-from: #0f172a;
+  --hero-via: #312e81;
+  --hero-to: #701a75;
+  --accent-from: #60a5fa;
+  --accent-to: #e879f9;
+  --accent-solid: #a855f7;
+}
+
+.animate-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee 12s linear infinite;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+}
+
+a {
+  text-decoration: none;
+}
+
+button {
+  border-radius: 15px; /* Rounded corners for buttons */
+}
+
+.card:hover {
+  transform: scale(1.05); /* Slightly enlarge on hover */
+}
+
+.navbar {
+  transition: all 0.3s ease; /* Smooth transition for navbar */
+}
+
+.testimonial-card {
+  border-radius: 15px; /* Rounded corners for testimonial cards */
+}
+
+.gallery-image {
+  transition: opacity 0.3s; /* Smooth transition for gallery images */
+}
+
+.gallery-image:hover {
+  opacity: 0.8; /* Slightly fade on hover */
+}
