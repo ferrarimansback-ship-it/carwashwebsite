@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+const isProd = process.env.NODE_ENV === 'production';
 const repo = 'carwashwebsite';
 
 const nextConfig = {
@@ -6,8 +7,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-    basePath: `/${repo}`,
-    assetPrefix: `/${repo}/`,
+  basePath: isProd ? `/${repo}` : '',
+  assetPrefix: isProd ? `/${repo}/` : '',
 };
 
-module.exports = nextConfig
+module.exports = nextConfig;
