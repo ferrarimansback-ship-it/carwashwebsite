@@ -481,8 +481,25 @@ const Home = () => {
         <div className="mt-8 flex w-full max-w-lg flex-col items-center gap-4">
           <div className="w-full">
             <p className="mx-auto mb-4 max-w-md text-sm leading-relaxed theme-text-muted sm:text-base">
-              When we reach  1,000 cars cleaned, we’ll donate $1,000 to{" "}
-              <span className="font-medium text-blue-400">MS NZ</span>
+              When we reach 1,000 cars cleaned, we’ll donate $1,000 to{" "}
+              <a
+                href="https://www.msnz.org.nz/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="
+                  inline-block
+                  font-semibold
+                  bg-gradient-to-r from-[var(--accent-from)] to-[var(--accent-to)]
+                  bg-clip-text text-transparent
+                  underline decoration-2 decoration-[var(--accent-to)]
+                  underline-offset-2
+                  hover:opacity-80
+                  transition
+                  drop-shadow-[0_0_6px_rgba(168,85,247,0.4)]
+                "
+              >
+                MS NZ
+              </a>
             </p>
 
             <div className="mb-2 text-center">
