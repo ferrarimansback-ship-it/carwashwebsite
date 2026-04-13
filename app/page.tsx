@@ -7,7 +7,7 @@ import LiveChat from '../components/LiveChat';
 
 const basePath = process.env.NODE_ENV === 'production' ? '/carwashwebsite' : '';
 
-type Step = 'service' | 'vehicle' | 'doors' | 'suburb' | 'time' | 'contact' | 'confirm';
+type Step = 'service' | 'vehicle' | 'doors' | 'suburb' | 'addons' | 'time' | 'contact' | 'confirm';
 
 type TimeSlot = {
   id: string;
@@ -16,7 +16,7 @@ type TimeSlot = {
   end: string;   // ISO string from backend
 };
 
-const STEP_ORDER: Step[] = ['service', 'vehicle', 'doors', 'suburb', 'time', 'contact', 'confirm'];
+const STEP_ORDER: Step[] = ['service', 'vehicle', 'doors', 'suburb', 'addons', 'time', 'contact', 'confirm'];
 
 const Home = () => {
   const [step, setStep] = useState<Step>('service');
@@ -74,7 +74,8 @@ const Home = () => {
       {
         key: 'basic',
         title: 'Basic Wash',
-        price: '$45',
+        basePrice: 45,
+        maxPrice: 80,
         summary: 'A quick exterior wash and interior tidy-up.',
         features: [
           'Exterior hand wash',
@@ -87,7 +88,8 @@ const Home = () => {
       {
         key: 'standard',
         title: 'Standard',
-        price: '$70 - $90',
+        basePrice: 70,
+        maxPrice: 110,
         summary: 'A quick exterior wash and interior tidy-up.',
         features: [
           'Exterior wash + wheel clean',
@@ -103,7 +105,8 @@ const Home = () => {
       {
         key: 'deluxe',
         title: 'Deluxe',
-        price: '$120 - $350',
+        basePrice: 120,
+        maxPrice: 185,
         summary: 'Our signature detail',
         features: [
           'Everything in Standard',
@@ -114,48 +117,71 @@ const Home = () => {
         duration: '2–3 hours',
         bestFor: 'deep clean, pre-sale prep, or special occasions',
       },
-      {
-        key: 'premium',
-        price: 'Calculated',
-        title: 'Addons',
-        summary: 'Simply add what you need:',
-        features: [
-          'Headlight restore',
-          'Single-stage polish',
-          'Multi-stage polish',
-          'Seat shampoo / leather',
-          'Pet hair removal',
-          'Tar + bug removal',
-          'Iron decon',
-          'Interior protection',
-          'Engine bay clean',
-        ],
-        duration: 'Minimum 30 mins',
-        bestFor: 'custom packages, add-ons, or specific requests',
-      },
     ],
     []
   );
 
-  const ADDON_PRICE = 35;
+  const addonOptions = [
+    { key: 'headlight', label: 'Headlight restore', price: 45 },
+    { key: 'single-polish', label: 'Single-stage polish', price: 70 },
+    { key: 'multi-polish', label: 'Multi-stage polish', price: 140 },
+    { key: 'seat-shampoo', label: 'Seat shampoo / leather', price: 50 },
+    { key: 'pet-hair', label: 'Pet hair removal', price: 35 },
+    { key: 'tar-bug', label: 'Tar + bug removal', price: 35 },
+    { key: 'iron-decon', label: 'Iron decon', price: 40 },
+    { key: 'interior-protect', label: 'Interior protection', price: 45 },
+    { key: 'engine-bay', label: 'Engine bay clean', price: 40 },
+  ];
+  
+  const vehicleModifiers: Record<string, number> = {
+    sedan: 0,
+    hatch: 0,
+    suv: 15,
+    ute: 20,
+    van: 25,
+  };
+
+  const doorModifiers: Record<string, number> = {
+    '2': 0,
+    '4': 5,
+    '5+': 10,
+  };
+
+  const suburbModifiers: Record<string, number> = {
+    cbd: 0,
+    newtown: 5,
+    kilbirnie: 5,
+    miramar: 10,
+    karori: 10,
+    lowerhutt: 20,
+  };
+
+  const addonTotal = useMemo(() => {
+    return bookingData.selectedAddons.reduce((total, addonKey) => {
+      const addon = addonOptions.find((item) => item.key === addonKey);
+      return total + (addon?.price ?? 0);
+    }, 0);
+  }, [bookingData.selectedAddons]);
+
+  const selectedServiceOption = useMemo(() => {
+    return serviceOptions.find((service) => service.key === selectedService) ?? null;
+  }, [serviceOptions, selectedService]);
 
   const canContinue = useMemo(() => {
     switch (step) {
       case 'vehicle':
-        if (selectedService === 'premium') {
-          return bookingData.selectedAddons.length > 0;
-        }
         return bookingData.vehicleType !== '';
       case 'doors':
         return bookingData.doors !== '';
       case 'suburb':
         return bookingData.suburb !== '';
+      case 'addons':
+        return true; // no required fields for addons step
       case 'time':
         return bookingData.timeSlotId !== '';
       case 'contact':
         return (
-          bookingData.name.trim() !== '' &&
-          isValidNzPhone(bookingData.phone)
+          bookingData.name.trim() !== '' && isValidNzPhone(bookingData.phone)
         );
       case 'confirm':
         return !submitting;
@@ -165,51 +191,35 @@ const Home = () => {
   }, [step, bookingData, submitting, selectedService]);
 
   const estimate = useMemo(() => {
-    if (!selectedService) return null;
+    if (!selectedServiceOption) return null;
 
-    const serviceBasePrices: Record<string, number> = {
-      basic: 50,
-      standard: 90,
-      deluxe: 140,
-      premium: 0,
+    const base = selectedServiceOption.basePrice;
+    const max = selectedServiceOption.maxPrice;
+
+    return {
+      base,
+      max,
+      addons: addonTotal,
+      totalMin: base + addonTotal,
+      totalMax: max + addonTotal,
+      label:
+        base + addonTotal === max + addonTotal
+          ? `$${base + addonTotal}`
+          : `$${base + addonTotal} - $${max + addonTotal}`,
     };
+  }, [selectedServiceOption, addonTotal]);
+  
+  const bookingTotal = useMemo(() => {
+    if (!selectedServiceOption) return null;
 
-    const vehicleModifiers: Record<string, number> = {
-      sedan: 0,
-      hatch: 0,
-      suv: 15,
-      ute: 20,
-      van: 25,
-    };
-
-    const doorModifiers: Record<string, number> = {
-      '2': 0,
-      '4': 5,
-      '5+': 10,
-    };
-
-    const suburbModifiers: Record<string, number> = {
-      cbd: 0,
-      newtown: 5,
-      kilbirnie: 5,
-      miramar: 10,
-      karori: 10,
-      lowerhutt: 20,
-    };
-
-    if (selectedService === 'premium') {
-      const addonCount = bookingData.selectedAddons.length;
-      return addonCount > 0 ? `$${addonCount * ADDON_PRICE}` : '$0';
-    }
-
-    const base = serviceBasePrices[selectedService] ?? 0;
+    const base = selectedServiceOption.basePrice;
     const vehicle = vehicleModifiers[bookingData.vehicleType] ?? 0;
     const doors = doorModifiers[bookingData.doors] ?? 0;
     const suburb = suburbModifiers[bookingData.suburb] ?? 0;
 
-    return `$${base + vehicle + doors + suburb}`;
-  }, [selectedService, bookingData]);
-
+    return base + vehicle + doors + suburb + addonTotal;
+  }, [selectedServiceOption, bookingData.vehicleType, bookingData.doors, bookingData.suburb, addonTotal]);
+  
   function sanitiseNzPhone(input: string) {
     const digitsOnly = input.replace(/[^\d]/g, '');
 
@@ -262,7 +272,8 @@ const Home = () => {
 
     if (step === 'vehicle') return setStep('doors');
     if (step === 'doors') return setStep('suburb');
-    if (step === 'suburb') return setStep('time');
+    if (step === 'suburb') return setStep('addons');
+    if (step === 'addons') return setStep('time');
     if (step === 'time') return setStep('contact');
     if (step === 'contact') return setStep('confirm');
 
@@ -271,7 +282,6 @@ const Home = () => {
         setSubmitting(true);
         setSubmitState('idle');
         setSubmitError('');
-
         const res = await fetch('/api/bookings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -307,19 +317,17 @@ const Home = () => {
 
   const renderStepContent = () => {
     if (!selectedService) return null;
-
-    if (step === 'vehicle') {
-      const addons = serviceOptions.find((s) => s.key === 'premium')?.features ?? [];
-
-      const toggleAddon = (addon: string) => {
+    
+    if (step === 'addons') {
+      const toggleAddon = (addonKey: string) => {
         setBookingData((prev) => {
-          const exists = prev.selectedAddons.includes(addon);
+          const exists = prev.selectedAddons.includes(addonKey);
 
           return {
             ...prev,
             selectedAddons: exists
-              ? prev.selectedAddons.filter((a) => a !== addon)
-              : [...prev.selectedAddons, addon],
+              ? prev.selectedAddons.filter((item) => item !== addonKey)
+              : [...prev.selectedAddons, addonKey],
           };
         });
       };
@@ -327,41 +335,58 @@ const Home = () => {
       return (
         <div className="space-y-4">
           <div>
-            <p className="text-sm font-medium text-[var(--text)]">Choose your addons</p>
+            <p className="text-sm font-medium text-[var(--text)]">Optional addons</p>
             <p className="mt-1 text-sm text-[var(--text-muted)]">
-              Select one or more. ${ADDON_PRICE} per addon.
+              Add any extras you want, or continue without any.
             </p>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {addons.map((addon) => {
-              const isActive = bookingData.selectedAddons.includes(addon);
+            {addonOptions.map((addon) => {
+              const isActive = bookingData.selectedAddons.includes(addon.key);
 
-            return (
-              <button
-                key={addon}
-                type="button"
-                onClick={() => toggleAddon(addon)}
-                className={`min-h-[60px] rounded-2xl border px-4 py-3 text-sm font-medium text-left transition ${
-                  isActive
-                    ? 'theme-accent text-white border-transparent shadow-lg'
-                    : 'border-[var(--border)] bg-white/5 text-[var(--text)] hover:bg-white/10'
-                }`}
-              >
-                {addon}
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={addon.key}
+                  type="button"
+                  onClick={() => toggleAddon(addon.key)}
+                  className={`min-h-[68px] rounded-2xl border px-4 py-3 text-left transition ${
+                    isActive
+                      ? 'theme-accent border-transparent text-white shadow-lg'
+                      : 'border-[var(--border)] bg-white/5 text-[var(--text)] hover:bg-white/10'
+                  }`}
+                >
+                  <div className="font-medium">{addon.label}</div>
+                  <div className={`mt-1 text-sm ${isActive ? 'text-white/85' : 'text-[var(--text-muted)]'}`}>
+                    +${addon.price}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
+            <p className="text-sm text-[var(--text-muted)]">Addon total</p>
+            <p className="mt-1 text-lg font-semibold text-[var(--text)]">${addonTotal}</p>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
+              {bookingData.selectedAddons.length > 0
+                ? `${bookingData.selectedAddons.length} addon${bookingData.selectedAddons.length === 1 ? '' : 's'} selected`
+                : 'No addons selected'}
+            </p>
+          </div>
         </div>
+      );
+    }
 
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
-          <p className="text-sm text-[var(--text-muted)]">Selected addons</p>
-          <p className="mt-1 text-lg font-semibold text-[var(--text)]">
-            {bookingData.selectedAddons.length}
-          </p>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">
-            Estimated addon total: {estimate ?? '$0'}
-          </p>
+    if (step === 'vehicle') {
+      return (
+        <div className="space-y-4">
+          <p className="text-sm font-medium text-[var(--text)]">Vehicle type</p><div className="grid grid-cols-2 gap-2">
+
+          <button type="button" className={optionButtonClass(bookingData.vehicleType === 'sedan')} onClick={() => setBookingData((p) => ({ ...p, vehicleType: 'sedan' }))}>Sedan</button>
+          <button type="button" className={optionButtonClass(bookingData.vehicleType === 'hatch')} onClick={() => setBookingData((p) => ({ ...p, vehicleType: 'hatch' }))}>Hatch</button>
+          <button type="button" className={optionButtonClass(bookingData.vehicleType === 'suv')} onClick={() => setBookingData((p) => ({ ...p, vehicleType: 'suv' }))}>SUV</button>
+          <button type="button" className={optionButtonClass(bookingData.vehicleType === 'ute')} onClick={() => setBookingData((p) => ({ ...p, vehicleType: 'ute' }))}>Ute</button>
         </div>
       </div>
     );
@@ -468,11 +493,17 @@ const Home = () => {
       return (
         <div className="space-y-4">
           <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
-            <p className="text-sm text-[var(--text-muted)]">Estimated price</p>
-            <p className="mt-1 text-2xl font-semibold text-[var(--text)]">{estimate ?? '—'}</p>
-            <p className="mt-2 text-sm text-[var(--text-muted)]">
-              Final quote confirmed after booking review. Travel and vehicle size are included in this estimate.
+            <p className="text-sm text-[var(--text-muted)]">Total price</p>
+            <p className="mt-1 text-2xl font-semibold text-[var(--text)]">
+              {bookingTotal !== null ? `$${bookingTotal}` : '—'}
             </p>
+            <div className="mt-3 space-y-1 text-sm text-[var(--text-muted)]">
+              <p>Base service: ${selectedServiceOption?.basePrice ?? 0}</p>
+              <p>Vehicle: +${vehicleModifiers[bookingData.vehicleType] ?? 0}</p>
+              <p>Doors: +${doorModifiers[bookingData.doors] ?? 0}</p>
+              <p>Suburb: +${suburbModifiers[bookingData.suburb] ?? 0}</p>
+              <p>Addons: +${addonTotal}</p>
+            </div>
           </div>
 
           <div className="space-y-2 text-sm text-[var(--text-muted)]">
@@ -626,13 +657,16 @@ const Home = () => {
                   >
                     <ServiceCard
                       title={service.title}
-                      price={service.price}
+                      price={
+                        isSelected
+                          ? `$${service.basePrice}${addonTotal > 0 ? ` + $${addonTotal} addons` : ''}`
+                          : `$${service.basePrice} - $${service.maxPrice}`
+                      }
                       summary={service.summary}
                       features={service.features}
                       duration={service.duration}
                       bestFor={service.bestFor}
                       highlight={service.highlight}
-                      featureMode={service.featureMode}
                       isSelected={isSelected}
                       step={step}
                       onSelect={() => handleSelectService(service.key)}
@@ -715,7 +749,7 @@ const Home = () => {
       </div>
 
       <LiveChat
-        estimate={typeof estimate === 'string' ? estimate : null}
+        estimate={estimate?.label ?? null}
         onBookNow={() => {
           document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' });
         }}

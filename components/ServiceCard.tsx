@@ -10,7 +10,6 @@ type ServiceCardProps = {
   duration: string;
   bestFor: string;
   highlight?: boolean;
-  featureMode?: 'list' | 'buttons';
   isSelected?: boolean;
   step?: string;
   onSelect?: () => void;
