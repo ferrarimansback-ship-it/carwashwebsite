@@ -85,14 +85,16 @@ export default function ServiceCard({
               {children}
             </div>
 
-            <div className="mt-6 mt-auto flex flex-col gap-3 sm:flex-row">
-              <button
-                type="button"
-                onClick={onBack}
-                className="w-full rounded-2xl border border-[var(--border)] px-5 py-3 font-medium text-[var(--text)]"
-              >
-                Back
-              </button>
+            <div className="mt-6 flex flex-col gap-3 sm:mt-auto sm:flex-row">
+              {onBack && (
+                <button
+                  type="button"
+                  onClick={onBack}
+                  className="w-full rounded-2xl border border-[var(--border)] px-5 py-3 font-medium text-[var(--text)]"
+                >
+                  Back
+                </button>
+              )}
 
               <button
                 type="button"

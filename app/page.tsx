@@ -35,6 +35,7 @@ const Home = () => {
     timeEnd: '',
     name: '',
     phone: '',
+    email: '',
     selectedAddons: [] as string[],
   });
 
@@ -181,10 +182,12 @@ const Home = () => {
         return bookingData.timeSlotId !== '';
       case 'contact':
         return (
-          bookingData.name.trim() !== '' && isValidNzPhone(bookingData.phone)
+          bookingData.name.trim() !== '' &&
+          isValidNzPhone(bookingData.phone) &&
+          isValidEmail(bookingData.email)
         );
       case 'confirm':
-        return !submitting;
+        return !submitting && submitState !== 'success';
       default:
         return false;
     }
@@ -235,6 +238,10 @@ const Home = () => {
     return /^2\d{7,9}$/.test(phone);
   }
 
+  function isValidEmail(email: string) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
   const handleSelectService = (serviceKey: string) => {
     setSelectedService(serviceKey);
     setBookingData({
@@ -248,6 +255,7 @@ const Home = () => {
       timeEnd: '',
       name: '',
       phone: '',
+      email: '',
       selectedAddons: [],
     });
     setSubmitState('idle');
@@ -268,6 +276,7 @@ const Home = () => {
   const [submitError, setSubmitError] = useState('');
 
   const handleContinue = async () => {
+    if (step === 'confirm' && submitState === 'success') return;
     if (!canContinue) return;
 
     if (step === 'vehicle') return setStep('doors');
@@ -282,11 +291,13 @@ const Home = () => {
         setSubmitting(true);
         setSubmitState('idle');
         setSubmitError('');
+
         const res = await fetch('/api/bookings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...bookingData,
+            bookingTotal,
             estimate,
           }),
         });
@@ -308,6 +319,30 @@ const Home = () => {
     }
   };
 
+  const handleFinish = () => {
+    setSelectedService('');
+    setStep('service');
+    setSubmitState('idle');
+    setSubmitError('');
+    setSubmitting(false);
+
+    setBookingData({
+      service: '',
+      vehicleType: '',
+      doors: '',
+      suburb: '',
+      timeSlotId: '',
+      timeLabel: '',
+      timeStart: '',
+      timeEnd: '',
+      name: '',
+      phone: '',
+      email: '',
+      selectedAddons: [],
+    });
+
+    document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' });
+  };
   const optionButtonClass = (isActive: boolean) =>
     `rounded-xl border px-4 py-3 text-sm font-medium transition ${
       isActive
@@ -485,6 +520,18 @@ const Home = () => {
           {bookingData.phone.length > 0 && !isValidNzPhone(bookingData.phone) && (
             <p className="text-sm text-red-400">Enter a valid NZ mobile number.</p>
           )}
+
+          <input
+            type="email"
+            value={bookingData.email}
+            onChange={(e) => setBookingData((prev) => ({ ...prev, email: e.target.value }))}
+            placeholder="Email"
+            className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[var(--text)] outline-none transition focus:ring-2 focus:ring-[var(--accent-from)]"
+          />
+
+          {bookingData.email.length > 0 && !isValidEmail(bookingData.email) && (
+            <p className="text-sm text-red-400">Enter a valid email address.</p>
+          )}
         </div>
       );
     }
@@ -520,7 +567,14 @@ const Home = () => {
           </p>
 
           {submitState === 'success' && (
-            <p className="text-sm text-green-400">Booking request sent successfully.</p>
+            <div className="rounded-2xl border border-green-500/30 bg-green-500/10 p-4">
+              <p className="text-sm font-medium text-green-300">
+                Booking request sent successfully.
+              </p>
+              <p className="mt-1 text-sm text-green-200/80">
+                Tap Finish to return to services.
+              </p>
+            </div>
           )}
           {submitState === 'error' && (
             <p className="text-sm text-red-400">
@@ -535,8 +589,14 @@ const Home = () => {
   };
 
   const continueLabel =
-    step === 'confirm' ? (submitting ? 'Sending...' : 'Request Booking') : 'Continue';
-
+  step === 'confirm'
+    ? submitState === 'success'
+      ? 'Finish'
+      : submitting
+        ? 'Sending...'
+        : 'Request Booking'
+    : 'Continue';
+  
   const carsCleaned = 187; // This would be dynamic in a real app
   const targetCars = 1000;
   const progressPercentage = Math.min((carsCleaned / targetCars) * 100, 100);
@@ -649,7 +709,8 @@ const Home = () => {
                     className={[
                       'transition-all duration-500 ease-out',
                       'min-h-[100%]',
-                      isSelected ? 'sm:col-span-2 xl:col-span-4' : '',
+                      isSelected
+                      ? 'sm:col-span-2 xl:col-span-4' : '',
                       isDimmed
                         ? 'pointer-events-none scale-[0.98] opacity-0 sm:max-h-0 sm:overflow-hidden'
                         : 'opacity-100'
@@ -670,10 +731,20 @@ const Home = () => {
                       isSelected={isSelected}
                       step={step}
                       onSelect={() => handleSelectService(service.key)}
-                      onContinue={isSelected ? handleContinue : undefined}
+                      onContinue={
+                        isSelected
+                          ? submitState === 'success' && step === 'confirm'
+                            ? handleFinish
+                            : handleContinue
+                          : undefined
+                      }
                       continueLabel={continueLabel}
-                      canContinue={canContinue}
-                      onBack={isSelected && step !== 'service' ? goBack : undefined}
+                      canContinue={step === 'confirm' && submitState === 'success' ? true : canContinue}
+                      onBack={
+                        isSelected && step !== 'service' && !(step === 'confirm' && submitState === 'success')
+                          ? goBack
+                          : undefined
+                      }
                     >
                       {isSelected ? renderStepContent() : null}
                     </ServiceCard>
