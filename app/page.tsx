@@ -5,6 +5,8 @@ import ServiceCard from '../components/ServiceCard';
 import TestimonialCard from '../components/TestimonialCard';
 import LiveChat from '../components/LiveChat';
 
+const basePath = process.env.NODE_ENV === 'production' ? '/carwashwebsite' : '';
+
 type Step = 'service' | 'vehicle' | 'doors' | 'suburb' | 'time' | 'contact' | 'confirm';
 
 type TimeSlot = {
@@ -451,7 +453,7 @@ const Home = () => {
         className="relative flex flex-col items-center justify-center px-4 pt-28 pb-16 text-center sm:px-6 sm:pt-32"
       >
         <img
-          src="/brand/buffd/buffd-logo-primary.png"
+          src={`${basePath}/brand/buffd/buffd-logo-primary.png`}
           alt="Buff’d"
           className="buffd-logo buffd-logo--hero"
         />
@@ -469,7 +471,7 @@ const Home = () => {
         {/* Hero image */}
         <div className="theme-hero mt-8 relative h-56 w-full max-w-5xl overflow-hidden rounded-2xl border border-white/10 shadow-xl sm:h-64 lg:h-72">
           <img
-            src="/brand/audi-hero.jpeg"
+            src={`${basePath}/brand/audi-hero.jpeg`}
             alt="Freshly cleaned black Audi parked in a Wellington driveway"
             className="w-full h-full object-cover"
           />
