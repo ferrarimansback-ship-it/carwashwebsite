@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import DarkModeToggle from './DarkModeToggle';
-const basePath = process.env.NODE_ENV === 'production' ? '/carwashwebsite' : '';
+const basePath = process.env.NODE_ENV === 'production' ? '/buffdnz' : '';
 
 const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
