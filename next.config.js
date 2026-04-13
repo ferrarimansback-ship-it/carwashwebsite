@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const isProd = process.env.NODE_ENV === 'production';
-const repo = 'buffdnz-web';
+const repo = 'buffdnz';
 
 const nextConfig = {
   output: 'export',
