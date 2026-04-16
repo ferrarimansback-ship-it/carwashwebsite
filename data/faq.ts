@@ -1,14 +1,14 @@
 const FAQ_PROMPTS = [
   { id: 'price', label: 'How much does it cost?' },
+  { id: 'difference', label: 'What are the differences between packages?' },
   { id: 'time', label: 'How long does it take?' },
   { id: 'location', label: 'Where do you service?' },
-  { id: 'booking', label: 'How do I book?' },
-  { id: 'payment', label: 'How does payment work?' },
   { id: 'availability', label: 'When are you available?' },
-  { id: 'difference', label: 'What are the differences between packages?' },
   { id: 'extras', label: 'Do you offer extras or custom work?' },
-  { id: 'weather', label: 'What happens if it rains?' },
+  { id: 'payment', label: 'How does payment work?' },
   { id: 'access', label: 'Do I need to be home?' },
+  { id: 'weather', label: 'What happens if it rains?' },
+  { id: 'booking', label: 'How do I book?' },
 ];
 
 export type FaqAnswer = string | ((estimate?: string | null) => string);
