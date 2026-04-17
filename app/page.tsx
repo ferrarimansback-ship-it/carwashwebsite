@@ -361,59 +361,75 @@ const Home = () => {
     if (step === 'contact') return setStep('confirm');
 
     if (step === 'confirm') {
+      const fmtDate = (iso: string) => {
+        try {
+          return new Date(iso).toLocaleString('en-NZ', {
+            timeZone: 'Pacific/Auckland',
+            weekday: 'short',
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+          });
+        } catch { return iso; }
+      };
+
+      const serviceLabel = serviceOptions.find((s) => s.key === bookingData.service)?.title ?? bookingData.service;
+      const addonLabels = bookingData.selectedAddons.length > 0
+        ? bookingData.selectedAddons.map((k) => addonOptions.find((a) => a.key === k)?.label ?? k).join(', ')
+        : 'None';
+      const suburbLabels: Record<string, string> = {
+        cbd: 'Wellington CBD', newtown: 'Newtown', kilbirnie: 'Kilbirnie',
+        miramar: 'Miramar', karori: 'Karori', lowerhutt: 'Lower Hutt',
+      };
+      const vehicleLabels: Record<string, string> = {
+        sedan: 'Sedan', hatch: 'Hatch', suv: 'SUV', ute: 'Ute', van: 'Van',
+      };
+
+      const buildMessage = () => [
+        `Service:        ${serviceLabel}`,
+        `Vehicle:        ${vehicleLabels[bookingData.vehicleType] ?? (bookingData.vehicleType || '—')}`,
+        `Doors:          ${bookingData.doors || '—'}`,
+        `Suburb:         ${suburbLabels[bookingData.suburb] ?? (bookingData.suburb || '—')}`,
+        `Addons:         ${addonLabels}`,
+        ``,
+        `Date/time:      ${bookingData.timeStart ? fmtDate(bookingData.timeStart) : '—'}`,
+        `Finish by:      ${bookingData.timeEnd ? fmtDate(bookingData.timeEnd) : '—'}`,
+        `Duration:       ${bookingData.timeLabel?.split('·')[1]?.trim() ?? '—'}`,
+        ``,
+        `Name:           ${bookingData.name}`,
+        `Phone:          +64 ${bookingData.phone}`,
+        `Email:          ${bookingData.email}`,
+        ``,
+        `Booking total:  $${bookingTotal ?? '—'}`,
+      ].join('\n');
+
+      const submitViaFormFallback = async () => {
+        const fallbackRes = await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({
+            access_key: '90eda1de-3d09-4d73-a2c0-87d49beab2f4',
+            name: bookingData.name,
+            email: bookingData.email,
+            subject: `New booking — ${bookingData.name} · ${serviceLabel} · ${bookingData.timeStart ? fmtDate(bookingData.timeStart) : ''}`,
+            message: buildMessage(),
+          }),
+        });
+        const fallbackData = await fallbackRes.json().catch(() => ({}));
+        if (!fallbackRes.ok || !fallbackData?.success) {
+          throw new Error(fallbackData?.message || fallbackData?.error || `Booking email failed to send`);
+        }
+      };
+
       try {
         setSubmitting(true);
         setSubmitState('idle');
         setSubmitError('');
 
-        const bookingPayload = {
-          ...bookingData,
-          bookingTotal,
-          estimate,
-        };
-
-        const submitViaFormFallback = async () => {
-          const message = [
-            `Service: ${bookingData.service}`,
-            `Vehicle: ${bookingData.vehicleType || '—'}`,
-            `Doors: ${bookingData.doors || '—'}`,
-            `Suburb: ${bookingData.suburb || '—'}`,
-            `Preferred time: ${bookingData.timeLabel || '—'}`,
-            `Time start: ${bookingData.timeStart || '—'}`,
-            `Time end: ${bookingData.timeEnd || '—'}`,
-            `Name: ${bookingData.name}`,
-            `Phone: +64 ${bookingData.phone}`,
-            `Email: ${bookingData.email}`,
-            `Addons: ${bookingData.selectedAddons.length > 0 ? bookingData.selectedAddons.join(', ') : 'None'}`,
-            `Booking total: ${bookingTotal ?? '—'}`,
-            `Estimate: ${estimate?.label ?? '—'}`,
-          ].join('\n');
-
-          const fallbackRes = await fetch('https://api.web3forms.com/submit', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json',
-            },
-            body: JSON.stringify({
-              access_key: '90eda1de-3d09-4d73-a2c0-87d49beab2f4',
-              name: bookingData.name,
-              email: bookingData.email,
-              subject: `New booking request - ${bookingData.name} - ${bookingData.service}`,
-              message,
-            }),
-          });
-
-          const fallbackData = await fallbackRes.json().catch(() => ({}));
-
-          if (!fallbackRes.ok || !fallbackData?.success) {
-            throw new Error(
-              fallbackData?.message ||
-                fallbackData?.error ||
-                `Booking email failed to send`
-            );
-          }
-        };
+        const bookingPayload = { ...bookingData, bookingTotal, estimate };
 
         const res = await fetch(bookingsApiUrl, {
           method: 'POST',
@@ -438,47 +454,7 @@ const Home = () => {
       } catch (error) {
         if (bookingsApiUrl === '/api/bookings') {
           try {
-            const message = [
-              `Service: ${bookingData.service}`,
-              `Vehicle: ${bookingData.vehicleType || '—'}`,
-              `Doors: ${bookingData.doors || '—'}`,
-              `Suburb: ${bookingData.suburb || '—'}`,
-              `Preferred time: ${bookingData.timeLabel || '—'}`,
-              `Time start: ${bookingData.timeStart || '—'}`,
-              `Time end: ${bookingData.timeEnd || '—'}`,
-              `Name: ${bookingData.name}`,
-              `Phone: +64 ${bookingData.phone}`,
-              `Email: ${bookingData.email}`,
-              `Addons: ${bookingData.selectedAddons.length > 0 ? bookingData.selectedAddons.join(', ') : 'None'}`,
-              `Booking total: ${bookingTotal ?? '—'}`,
-              `Estimate: ${estimate?.label ?? '—'}`,
-            ].join('\n');
-
-            const fallbackRes = await fetch('https://api.web3forms.com/submit', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Accept: 'application/json',
-              },
-              body: JSON.stringify({
-                access_key: '90eda1de-3d09-4d73-a2c0-87d49beab2f4',
-                name: bookingData.name,
-                email: bookingData.email,
-                subject: `New booking request - ${bookingData.name} - ${bookingData.service}`,
-                message,
-              }),
-            });
-
-            const fallbackData = await fallbackRes.json().catch(() => ({}));
-
-            if (!fallbackRes.ok || !fallbackData?.success) {
-              throw new Error(
-                fallbackData?.message ||
-                  fallbackData?.error ||
-                  `Booking email failed to send`
-              );
-            }
-
+            await submitViaFormFallback();
             setSubmitState('success');
             return;
           } catch (fallbackError) {
