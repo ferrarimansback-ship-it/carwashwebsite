@@ -5,7 +5,6 @@ import ServiceCard from '../components/ServiceCard';
 import TestimonialCard from '../components/TestimonialCard';
 import LiveChat from '../components/LiveChat';
 
-const basePath = process.env.NODE_ENV === 'production' ? '/buffdnz' : '';
 
 
 function toICSDate(iso: string): string {
@@ -778,7 +777,7 @@ const Home = () => {
       >
         {/* Logo */}
         <img
-          src={`${basePath}/brand/buffd/buffd-logo-primary.png`}
+          src="/brand/buffd/buffd-logo-primary.png"
           alt="Buff’d"
           className="buffd-logo buffd-logo--hero"
         />
@@ -796,7 +795,7 @@ const Home = () => {
         {/* Hero image */}
         <div className="theme-hero mt-6 relative h-44 w-full max-w-5xl overflow-hidden rounded-2xl border border-white/10 shadow-xl sm:h-52 lg:h-60">
           <img
-            src={`${basePath}/brand/audi-hero.jpeg`}
+            src="/brand/audi-hero.jpeg"
             alt="Freshly cleaned black Audi parked in a Wellington driveway"
             className="w-full h-full object-cover"
           />

@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import DarkModeToggle from './DarkModeToggle';
-const basePath = process.env.NODE_ENV === 'production' ? '/buffdnz' : '';
 
 const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -24,7 +23,7 @@ const Navbar: React.FC = () => {
       }`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center items-center justify-between gap-3">
         <img
-          src={`${basePath}/brand/buffd/buffd-logo-primary.png`}
+          src="/brand/buffd/buffd-logo-primary.png"
           alt="Buff’d"
           className="h-10 w-10 object-contain"
         />
