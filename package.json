@@ -1,5 +1,5 @@
 {
-  "name": "buffd-website",
+  "name": "buffdnz",
   "version": "1.0.0",
   "description": "A modern, mobile-first car detailing website for Buffd NZ.",
   "main": "app/page.tsx",
