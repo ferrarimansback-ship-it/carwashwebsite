@@ -6,6 +6,7 @@ import TestimonialCard from '../components/TestimonialCard';
 import LiveChat from '../components/LiveChat';
 
 const basePath = process.env.NODE_ENV === 'production' ? '/buffdnz' : '';
+const bookingsApiUrl = process.env.NEXT_PUBLIC_BOOKINGS_API_URL || '/api/bookings';
 
 type Step = 'service' | 'vehicle' | 'doors' | 'suburb' | 'addons' | 'time' | 'contact' | 'confirm';
 
@@ -300,24 +301,124 @@ const Home = () => {
         setSubmitState('idle');
         setSubmitError('');
 
-        const res = await fetch('/api/bookings', {
+        const bookingPayload = {
+          ...bookingData,
+          bookingTotal,
+          estimate,
+        };
+
+        const submitViaFormFallback = async () => {
+          const message = [
+            `Service: ${bookingData.service}`,
+            `Vehicle: ${bookingData.vehicleType || '—'}`,
+            `Doors: ${bookingData.doors || '—'}`,
+            `Suburb: ${bookingData.suburb || '—'}`,
+            `Preferred time: ${bookingData.timeLabel || '—'}`,
+            `Time start: ${bookingData.timeStart || '—'}`,
+            `Time end: ${bookingData.timeEnd || '—'}`,
+            `Name: ${bookingData.name}`,
+            `Phone: +64 ${bookingData.phone}`,
+            `Email: ${bookingData.email}`,
+            `Addons: ${bookingData.selectedAddons.length > 0 ? bookingData.selectedAddons.join(', ') : 'None'}`,
+            `Booking total: ${bookingTotal ?? '—'}`,
+            `Estimate: ${estimate?.label ?? '—'}`,
+          ].join('\n');
+
+          const fallbackRes = await fetch('https://formsubmit.co/ajax/buffd.nz@gmail.com', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({
+              name: bookingData.name,
+              email: bookingData.email,
+              _subject: `New booking request - ${bookingData.name} - ${bookingData.service}`,
+              message,
+            }),
+          });
+
+          const fallbackData = await fallbackRes.json().catch(() => ({}));
+
+          if (!fallbackRes.ok) {
+            throw new Error(
+              fallbackData?.message ||
+                fallbackData?.error ||
+                `Fallback request failed with status ${fallbackRes.status}`
+            );
+          }
+        };
+
+        const res = await fetch(bookingsApiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...bookingData,
-            bookingTotal,
-            estimate,
-          }),
+          body: JSON.stringify(bookingPayload),
         });
 
         const data = await res.json().catch(() => ({}));
 
         if (!res.ok) {
-          throw new Error(data?.error || `Request failed with status ${res.status}`);
+          const shouldFallbackToDirectEmail =
+            bookingsApiUrl === '/api/bookings' && (res.status === 404 || res.status === 405);
+
+          if (shouldFallbackToDirectEmail) {
+            await submitViaFormFallback();
+          } else {
+            throw new Error(data?.error || `Request failed with status ${res.status}`);
+          }
         }
 
         setSubmitState('success');
       } catch (error) {
+        if (bookingsApiUrl === '/api/bookings') {
+          try {
+            const message = [
+              `Service: ${bookingData.service}`,
+              `Vehicle: ${bookingData.vehicleType || '—'}`,
+              `Doors: ${bookingData.doors || '—'}`,
+              `Suburb: ${bookingData.suburb || '—'}`,
+              `Preferred time: ${bookingData.timeLabel || '—'}`,
+              `Time start: ${bookingData.timeStart || '—'}`,
+              `Time end: ${bookingData.timeEnd || '—'}`,
+              `Name: ${bookingData.name}`,
+              `Phone: +64 ${bookingData.phone}`,
+              `Email: ${bookingData.email}`,
+              `Addons: ${bookingData.selectedAddons.length > 0 ? bookingData.selectedAddons.join(', ') : 'None'}`,
+              `Booking total: ${bookingTotal ?? '—'}`,
+              `Estimate: ${estimate?.label ?? '—'}`,
+            ].join('\n');
+
+            const fallbackRes = await fetch('https://formsubmit.co/ajax/buffd.nz@gmail.com', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+              },
+              body: JSON.stringify({
+                name: bookingData.name,
+                email: bookingData.email,
+                _subject: `New booking request - ${bookingData.name} - ${bookingData.service}`,
+                message,
+              }),
+            });
+
+            const fallbackData = await fallbackRes.json().catch(() => ({}));
+
+            if (!fallbackRes.ok) {
+              throw new Error(
+                fallbackData?.message ||
+                  fallbackData?.error ||
+                  `Fallback request failed with status ${fallbackRes.status}`
+              );
+            }
+
+            setSubmitState('success');
+            return;
+          } catch (fallbackError) {
+            console.error(fallbackError);
+          }
+        }
+
         console.error(error);
         setSubmitError(error instanceof Error ? error.message : 'Unknown error');
         setSubmitState('error');
